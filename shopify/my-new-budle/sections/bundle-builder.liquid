@@ -1,0 +1,138 @@
+{%- comment -%}
+  Bundle Builder (Online Store 2.0 section)
+  Customer picks 1 product from each of 3 groups -> 3-pack bundle.
+  Each group source: product list (priority) OR collection.
+  Behaviour lives in assets/bundle-builder.js, styles in assets/bundle-builder.css
+{%- endcomment -%}
+
+{{ 'bundle-builder.css' | asset_url | stylesheet_tag }}
+
+<section
+  class="bb"
+  data-bundle-builder
+  data-add-url="{{ routes.cart_add_url }}.js"
+  data-cart-url="{{ routes.cart_url }}"
+  data-discount="{{ section.settings.discount_percent }}"
+  data-currency="{{ cart.currency.iso_code }}"
+  data-locale="{{ request.locale.iso_code }}"
+  data-bundle-name="{{ section.settings.bundle_name | escape }}"
+>
+  <div class="bb__inner page-width">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="bb__title">{{ section.settings.heading | escape }}</h2>
+    {%- endif -%}
+
+    <div class="bb__groups">
+      {%- for i in (1..3) -%}
+        {%- assign title_key = 'group_' | append: i | append: '_title' -%}
+        {%- assign col_key = 'group_' | append: i | append: '_collection' -%}
+        {%- assign list_key = 'group_' | append: i | append: '_products' -%}
+        {%- assign picked_list = section.settings[list_key] -%}
+
+        {%- if picked_list != blank -%}
+          {%- assign group_products = picked_list -%}
+        {%- else -%}
+          {%- assign group_products = section.settings[col_key].products -%}
+        {%- endif -%}
+
+        <fieldset class="bb__group" data-group="{{ i }}">
+          <legend class="bb__legend">
+            {{- section.settings[title_key] | default: 'Choose an item' | escape -}}
+          </legend>
+
+          {%- if group_products == blank or group_products.size == 0 -%}
+            <p class="bb__empty">
+              {%- if request.design_mode -%}
+                Select a collection or products for this group in the theme editor.
+              {%- else -%}
+                No products available.
+              {%- endif -%}
+            </p>
+          {%- else -%}
+            <div class="bb__grid">
+              {%- for product in group_products limit: section.settings.max_per_group -%}
+                {%- assign variant = product.selected_or_first_available_variant -%}
+                {%- assign uid = 'bb-' | append: section.id | append: '-' | append: i | append: '-' | append: product.id -%}
+                <div class="bb__item">
+                  <input
+                    class="bb__radio"
+                    type="radio"
+                    name="bb-group-{{ i }}-{{ section.id }}"
+                    id="{{ uid }}"
+                    value="{{ variant.id }}"
+                    data-price="{{ variant.price }}"
+                    data-title="{{ product.title | escape }}"
+                    {% unless variant.available %}disabled{% endunless %}
+                  >
+                  <label class="bb__card" for="{{ uid }}">
+                    {%- if product.featured_media -%}
+                      {{
+                        product.featured_media
+                        | image_url: width: 400
+                        | image_tag: loading: 'lazy', widths: '200, 400', sizes: '(min-width: 750px) 180px, 45vw', class: 'bb__img', alt: product.featured_media.alt
+                      }}
+                    {%- endif -%}
+                    <span class="bb__name">{{ product.title | escape }}</span>
+                    <span class="bb__price">{{ variant.price | money }}</span>
+                    {%- unless variant.available -%}
+                      <span class="bb__badge">Sold out</span>
+                    {%- endunless -%}
+                  </label>
+                </div>
+              {%- endfor -%}
+            </div>
+          {%- endif -%}
+        </fieldset>
+      {%- endfor -%}
+    </div>
+
+    <div class="bb__summary">
+      <p class="bb__total">
+        Bundle total:
+        <s class="bb__old" data-old-total hidden></s>
+        <strong data-total>—</strong>
+      </p>
+
+      <button type="button" class="bb__btn button" data-add disabled aria-disabled="true">
+        <span data-btn-label>{{ section.settings.button_label | default: 'Add bundle to cart' | escape }}</span>
+        <span class="bb__spinner" data-spinner hidden aria-hidden="true"></span>
+      </button>
+
+      {%- comment -%} aria-live region: announces errors / success to screen readers {%- endcomment -%}
+      <p class="bb__status" data-status role="status" aria-live="polite"></p>
+    </div>
+  </div>
+</section>
+
+<script src="{{ 'bundle-builder.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Bundle builder",
+  "tag": "section",
+  "class": "section-bundle-builder",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Build your 3-pack" },
+    { "type": "text", "id": "bundle_name", "label": "Bundle name (line item property)", "default": "Custom 3-Pack" },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "Add bundle to cart" },
+    { "type": "range", "id": "discount_percent", "label": "Bundle discount (display only)", "min": 0, "max": 50, "step": 5, "unit": "%", "default": 10, "info": "Only shows the price in the UI. Create a matching automatic discount in Shopify admin for the real checkout price." },
+    { "type": "range", "id": "max_per_group", "label": "Max products per group", "min": 2, "max": 12, "step": 1, "default": 6 },
+
+    { "type": "header", "content": "Group 1" },
+    { "type": "text", "id": "group_1_title", "label": "Title", "default": "Pick your first item" },
+    { "type": "collection", "id": "group_1_collection", "label": "Collection" },
+    { "type": "product_list", "id": "group_1_products", "label": "Or specific products", "limit": 12, "info": "Overrides the collection if set." },
+
+    { "type": "header", "content": "Group 2" },
+    { "type": "text", "id": "group_2_title", "label": "Title", "default": "Pick your second item" },
+    { "type": "collection", "id": "group_2_collection", "label": "Collection" },
+    { "type": "product_list", "id": "group_2_products", "label": "Or specific products", "limit": 12 },
+
+    { "type": "header", "content": "Group 3" },
+    { "type": "text", "id": "group_3_title", "label": "Title", "default": "Pick your third item" },
+    { "type": "collection", "id": "group_3_collection", "label": "Collection" },
+    { "type": "product_list", "id": "group_3_products", "label": "Or specific products", "limit": 12 }
+  ],
+  "presets": [{ "name": "Bundle builder" }]
+}
+{% endschema %}

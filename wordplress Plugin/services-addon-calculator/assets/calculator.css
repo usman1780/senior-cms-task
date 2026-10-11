@@ -1,0 +1,15 @@
+.sac-wrap {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.sac-service {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.sac-total {
+    font-weight: 700;
+}

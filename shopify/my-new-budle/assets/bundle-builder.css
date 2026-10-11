@@ -1,0 +1,79 @@
+/* Bundle Builder - mobile first, BEM naming */
+.bb { padding: 2rem 0; }
+.bb__title { margin: 0 0 1.5rem; }
+.bb__groups { display: grid; gap: 2rem; }
+
+.bb__group { border: 0; margin: 0; padding: 0; min-width: 0; }
+.bb__legend { font-weight: 600; margin-bottom: .75rem; padding: 0; }
+.bb__empty { opacity: .7; }
+
+.bb__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .75rem;
+}
+
+.bb__item { position: relative; }
+
+/* Visually hidden but still focusable radio */
+.bb__radio {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.bb__radio:disabled { cursor: not-allowed; }
+
+.bb__card {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  height: 100%;
+  padding: .5rem;
+  border: 2px solid rgba(0, 0, 0, .15);
+  border-radius: 8px;
+  position: relative;
+}
+.bb__img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
+.bb__name { font-size: .9rem; }
+.bb__price { font-weight: 600; }
+
+.bb__radio:checked + .bb__card { border-color: currentColor; box-shadow: 0 0 0 1px currentColor; }
+.bb__radio:focus-visible + .bb__card { outline: 3px solid currentColor; outline-offset: 2px; }
+.bb__radio:disabled + .bb__card { opacity: .5; }
+
+.bb__badge {
+  position: absolute;
+  top: .75rem;
+  left: .75rem;
+  padding: .15rem .5rem;
+  font-size: .75rem;
+  background: #000;
+  color: #fff;
+  border-radius: 999px;
+}
+
+.bb__summary { margin-top: 2rem; display: grid; gap: .75rem; justify-items: start; }
+.bb__old { opacity: .6; margin-right: .5rem; }
+
+.bb__btn { display: inline-flex; align-items: center; gap: .5rem; }
+.bb__btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+.bb__spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: bb-spin .7s linear infinite;
+}
+@keyframes bb-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .bb__spinner { animation-duration: 2s; } }
+
+.bb__status { min-height: 1.5em; margin: 0; }
+.bb__status--error { color: #b00020; }
+
+@media (min-width: 750px) {
+  .bb__grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
